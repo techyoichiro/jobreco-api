@@ -31,15 +31,16 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          TAG=$(echo $GITHUB_SHA | head -c7)  # 最新のコミットSHAの最初の7文字をタグとして使用
+          TAG=$(echo $GITHUB_SHA | head -c7)
           docker build -t ${IMAGE_NAME}:${TAG} .
           docker push ${IMAGE_NAME}:${TAG}
 
       - name: Deploy to Cloud Run
         run: |
-          TAG=$(echo $GITHUB_SHA | head -c7)  # 最新のコミットSHAの最初の7文字をタグとして使用
-          gcloud run deploy web-push-demo \
+          TAG=$(echo $GITHUB_SHA | head -c7)
+          gcloud run deploy jobreco-api \
             --image ${IMAGE_NAME}:${TAG} \
             --platform managed \
             --region ${GCP_REGION} \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars DATABASE_URL=${{ secrets.DATABASE_URL }}
