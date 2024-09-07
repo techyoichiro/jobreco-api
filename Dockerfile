@@ -32,7 +32,7 @@ RUN go install github.com/air-verse/air@latest
 EXPOSE 8080
 
 # ホットリロードを実行する（airを使う場合）
-CMD ["air", "-c", ".air.toml"]
+# CMD ["air", "-c", ".air.toml"]
 
 # バイナリを直接実行する場合
-# CMD ["./main"]
+CMD [".cmd/main"]
