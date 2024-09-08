@@ -22,11 +22,11 @@ RUN go mod download
 # ローカルのソースコードをコンテナにコピー
 COPY . .
 
-# アプリケーションをビルド
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main ./cmd/main.go
+# Linux x86_64向けにクロスコンパイル
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/main ./cmd/main.go
 
 # airをインストール
-RUN go install github.com/air-verse/air@latest
+# RUN go install github.com/air-verse/air@latest
 
 # 公開予定のコンテナのポートを明示
 EXPOSE 8080
@@ -35,4 +35,4 @@ EXPOSE 8080
 # CMD ["air", "-c", ".air.toml"]
 
 # バイナリを直接実行する場合
-CMD [".cmd/main"]
+CMD ["/app/main"]
