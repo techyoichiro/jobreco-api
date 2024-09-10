@@ -15,7 +15,7 @@ func SetupRouter(authController *controller.AuthController, attendanceController
 		AllowOrigins: []string{
 			"http://localhost:3000",
 			"https://jobreco-api-njgi6c7muq-an.a.run.app",
-			"https://jobreco-aj3kdocv3-yoichiros-projects.vercel.app/"},
+			"https://jobreco-aj3kdocv3-yoichiros-projects.vercel.app"},
 		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders: []string{
 			"Origin",
