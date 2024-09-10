@@ -43,4 +43,4 @@ jobs:
             --platform managed \
             --region ${GCP_REGION} \
             --allow-unauthenticated \
-            --set-env-vars DATABASE_URL=${{ secrets.DATABASE_URL }}
+            --set-env-vars DATABASE_URL='${{ secrets.DATABASE_URL }}'

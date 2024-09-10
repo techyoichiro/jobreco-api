@@ -14,7 +14,11 @@ func ConnectionDB() (*gorm.DB, error) {
 		return nil, fmt.Errorf("DATABASE_URL environment variable is not set")
 	}
 
-	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  databaseURL,
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{})
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
