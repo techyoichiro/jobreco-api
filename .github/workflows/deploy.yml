@@ -20,6 +20,8 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
+        with: 
+          version: 'latest'
 
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v0.4.0
@@ -35,6 +37,15 @@ jobs:
           docker build -t ${IMAGE_NAME}:${TAG} .
           docker push ${IMAGE_NAME}:${TAG}
 
+      - name: Debug Information
+        run: |
+          echo "GITHUB_SHA: $GITHUB_SHA"
+          echo "IMAGE_NAME: $IMAGE_NAME"
+          TAG=$(echo $GITHUB_SHA | head -c7)
+          echo "TAG: $TAG"
+          gcloud info
+          docker images
+
       - name: Deploy to Cloud Run
         run: |
           TAG=$(echo $GITHUB_SHA | head -c7)
@@ -44,3 +55,4 @@ jobs:
             --region ${GCP_REGION} \
             --allow-unauthenticated \
             --set-env-vars DATABASE_URL='${{ secrets.DATABASE_URL }}'
+            
