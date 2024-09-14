@@ -57,8 +57,4 @@ jobs:
             --set-env-vars DATABASE_URL='${{ secrets.DATABASE_URL }}' \
             --set-env-vars TZ='Asia/Tokyo' \
             --ingress internal-and-cloud-load-balancing
-
-      - name: Output error logs
-        if: failure()
-        run: |
-          gcloud run services logs read --service=jobreco-api --region=${GCP_REGION} --format='value(name)' | head -n 1 | xargs -I {} gcloud run logs read --region=${GCP_REGION} --service=jobreco-api --limit=100
+            

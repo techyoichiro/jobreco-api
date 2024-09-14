@@ -4,6 +4,9 @@ FROM golang:1.23-alpine
 # コンテナ内の作業ディレクトリを設定
 WORKDIR /app
 
+# 公開予定のコンテナのポートを明示
+EXPOSE 8080
+
 # 必要なパッケージをインストール
 RUN apk update && apk add --no-cache git
 
@@ -27,9 +30,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/main ./cmd/main.go
 
 # airをインストール
 # RUN go install github.com/air-verse/air@latest
-
-# 公開予定のコンテナのポートを明示
-EXPOSE 8080
 
 # ホットリロードを実行する（airを使う場合）
 # CMD ["air", "-c", ".air.toml"]
