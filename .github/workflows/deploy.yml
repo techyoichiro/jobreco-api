@@ -61,4 +61,4 @@ jobs:
       - name: Output error logs
         if: failure()
         run: |
-          gcloud run revisions list --service=jobreco-api --region=${GCP_REGION} --format='value(name)' | head -n 1 | xargs -I {} gcloud run logs read --region=${GCP_REGION} --service=jobreco-api --limit=100
+          gcloud run services logs read --service=jobreco-api --region=${GCP_REGION} --format='value(name)' | head -n 1 | xargs -I {} gcloud run logs read --region=${GCP_REGION} --service=jobreco-api --limit=100
