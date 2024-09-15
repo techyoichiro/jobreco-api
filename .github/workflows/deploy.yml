@@ -56,5 +56,3 @@ jobs:
             --allow-unauthenticated \
             --set-env-vars DATABASE_URL='${{ secrets.DATABASE_URL }}' \
             --set-env-vars TZ='Asia/Tokyo' \
-            --ingress internal-and-cloud-load-balancing
-            
