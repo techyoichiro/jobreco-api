@@ -9,15 +9,6 @@ import (
 	"github.com/techyoichiro/jobreco-api/domain/repositories"
 )
 
-func formatDate(date *time.Time) string {
-	// "2006-01-02"は、フォーマットの基準となる日時
-	return date.Format("1/2(日)") // 月/日(曜日) の形式でフォーマット
-}
-
-func formatTime(t *time.Time) string {
-	return t.Format("15:04") // 時:分 の形式でフォーマット
-}
-
 type SummaryService struct {
 	repo repositories.SummaryRepository
 }
@@ -204,6 +195,20 @@ func generateRemarks(attendance model.Attendance) string {
 
 	// 備考欄をカンマで連結
 	return remark1
+}
+
+// 日付フォーマット
+func formatDate(date *time.Time) string {
+	// "2006-01-02"は、フォーマットの基準となる日時
+	return date.Format("1/2(日)") // 月/日(曜日) の形式でフォーマット
+}
+
+// 時刻フォーマット
+func formatTime(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.Format("15:04") // 時:分 の形式でフォーマット
 }
 
 // 時刻の文字列を time.Time 型に変換するヘルパー関数
