@@ -50,13 +50,10 @@ func (s *SummaryService) GetAttendance(employeeID uint, year int, month int) ([]
 		workDate := formatDate(&attendance.WorkDate)
 
 		// 勤務時刻取得
-		startTime := formatTime(attendance.StartTime1)
-		var endTime string
-		if attendance.EndTime2 != nil {
-			endTime = formatTime(attendance.EndTime1)
-		} else if attendance.EndTime1 != nil {
-			endTime = formatTime(attendance.EndTime2)
-		}
+		startTime1 := formatTime(attendance.StartTime1)
+		endTime1 := formatTime(attendance.EndTime1)
+		startTime2 := formatTime(attendance.StartTime2)
+		endTime2 := formatTime(attendance.EndTime2)
 
 		// 休憩記録取得
 		var breakStart string
@@ -71,8 +68,10 @@ func (s *SummaryService) GetAttendance(employeeID uint, year int, month int) ([]
 		response = append(response, model.AttendanceResponse{
 			ID:            attendance.ID,
 			WorkDate:      workDate,
-			StartTime1:    startTime,
-			EndTime1:      endTime,
+			StartTime1:    startTime1,
+			EndTime1:      endTime1,
+			StartTime2:    startTime2,
+			EndTime2:      endTime2,
 			TotalWorkTime: calculateWorkTime(attendance),
 			BreakStart:    breakStart,
 			BreakEnd:      breakEnd,
