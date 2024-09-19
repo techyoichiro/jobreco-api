@@ -8,7 +8,7 @@ import (
 
 type Attendance struct {
 	gorm.Model
-	EmployeeID uint       `gorm:"not null;index"`                                   // 外部キー：employees テーブル
+	EmployeeID uint       `gorm:"not null;index;uniqueIndex:unique_attendance"`     // 外部キー：employees テーブル、一意制約に含める
 	WorkDate   time.Time  `gorm:"type:date;not null;uniqueIndex:unique_attendance"` // 勤務日、一意制約に含める
 	StartTime1 *time.Time `gorm:"type:timestamp"`                                   // 勤務開始時間1
 	EndTime1   *time.Time `gorm:"type:timestamp"`                                   // 勤務終了時間1
@@ -18,10 +18,7 @@ type Attendance struct {
 	BreakEnd   *time.Time `gorm:"type:timestamp"`                                   // 休憩終了時間
 	StoreID1   uint       `gorm:"not null"`                                         // 外部キー：stores テーブル
 	StoreID2   *uint      `gorm:""`                                                 // 外部キー（オプション）：stores テーブル
-	StatusID   int        `gorm:"not null"`                                         // 勤務ステータスID（オプション）
-
-	// 一意制約
-	UniqueIndex string `gorm:"uniqueIndex:unique_attendance,employee_id,work_date"`
+	StatusID   int        `gorm:"not null"`                                         // 勤務ステータスID
 }
 
 type AttendanceResponse struct {
