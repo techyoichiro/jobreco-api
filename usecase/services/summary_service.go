@@ -1,57 +1,25 @@
 package services
 
 import (
+	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	model "github.com/techyoichiro/jobreco-api/domain/models"
 	"github.com/techyoichiro/jobreco-api/domain/repositories"
 )
 
-func formatDate(date time.Time) string {
+func formatDate(date *time.Time) string {
 	// "2006-01-02"は、フォーマットの基準となる日時
 	return date.Format("1/2(日)") // 月/日(曜日) の形式でフォーマット
 }
 
-func formatTime(t time.Time) string {
+func formatTime(t *time.Time) string {
 	return t.Format("15:04") // 時:分 の形式でフォーマット
 }
 
 type SummaryService struct {
 	repo repositories.SummaryRepository
-}
-
-type BreakRecordResponse struct {
-	ID         uint   `json:"ID"`
-	WorkDate   string `json:"WorkDate"`
-	BreakStart string `json:"BreakStart"`
-	BreakEnd   string `json:"BreakEnd,omitempty"`
-}
-
-type SegmentsResponse struct {
-	ID        uint   `json:"ID"`
-	WorkDate  string `json:"WorkDate"`
-	StoreID   uint   `json:"StoreID"`
-	StartTime string `json:"StartTime"`
-	EndTime   string `json:"EndTime,omitempty"`
-}
-
-type SummaryResponse struct {
-	ID            uint                  `json:"ID"`
-	WorkDate      string                `json:"WorkDate"`
-	StartTime     string                `json:"StartTime"`
-	EndTime       string                `json:"EndTime,omitempty"`
-	TotalWorkTime float64               `json:"TotalWorkTime"`
-	BreakRecords  []BreakRecordResponse `json:"BreakRecords"`
-	Overtime      float64               `json:"Overtime"`
-	Remarks       string                `json:"Remarks"`
-	HourlyPay     int                   `json:"HourlyPay"`
-}
-
-type UpdateSummaryRequest struct {
-	WorkSegments []SegmentsResponse    `json:"workSegments"`
-	BreakRecords []BreakRecordResponse `json:"breakRecords"`
 }
 
 func NewSummaryService(repo repositories.SummaryRepository) *SummaryService {
@@ -64,8 +32,8 @@ func (s *SummaryService) GetAllEmployee() ([]model.Employee, error) {
 }
 
 // 指定した従業員IDの勤怠情報を取得するサービス
-func (s *SummaryService) GetSummary(employeeID uint, year int, month int) ([]SummaryResponse, error) {
-	summaries, err := s.repo.GetSummary(employeeID, year, month)
+func (s *SummaryService) GetAttendance(employeeID uint, year int, month int) ([]model.AttendanceResponse, error) {
+	attendances, err := s.repo.GetAttendance(employeeID, year, month)
 	if err != nil {
 		return nil, err
 	}
@@ -75,40 +43,41 @@ func (s *SummaryService) GetSummary(employeeID uint, year int, month int) ([]Sum
 		return nil, err
 	}
 
-	response := []SummaryResponse{}
-	for _, summary := range summaries {
-		var breakRecords []BreakRecordResponse
-		for _, breakRecord := range summary.BreakRecords {
-			breakStart := formatTime(breakRecord.BreakStart)
-			var breakEnd string
-			if breakRecord.BreakEnd != nil {
-				breakEnd = formatTime(*breakRecord.BreakEnd)
-			}
+	response := []model.AttendanceResponse{}
+	for _, attendance := range attendances {
 
-			breakRecords = append(breakRecords, BreakRecordResponse{
-				ID:         breakRecord.ID,
-				BreakStart: breakStart,
-				BreakEnd:   breakEnd,
-			})
-		}
+		// 勤務取得
+		workDate := formatDate(&attendance.WorkDate)
 
-		startTime := formatTime(summary.StartTime)
+		// 勤務時刻取得
+		startTime := formatTime(attendance.StartTime1)
 		var endTime string
-		if summary.EndTime != nil {
-			endTime = formatTime(*summary.EndTime)
+		if attendance.EndTime2 != nil {
+			endTime = formatTime(attendance.EndTime1)
+		} else if attendance.EndTime1 != nil {
+			endTime = formatTime(attendance.EndTime2)
 		}
 
-		workDate := formatDate(summary.WorkDate)
+		// 休憩記録取得
+		var breakStart string
+		var breakEnd string
+		if attendance.BreakStart != nil {
+			breakStart = formatTime(attendance.BreakStart)
+		}
+		if attendance.BreakEnd != nil {
+			breakEnd = formatTime(attendance.BreakEnd)
+		}
 
-		response = append(response, SummaryResponse{
-			ID:            summary.ID,
+		response = append(response, model.AttendanceResponse{
+			ID:            attendance.ID,
 			WorkDate:      workDate,
-			StartTime:     startTime,
-			EndTime:       endTime,
-			TotalWorkTime: summary.TotalWorkTime,
-			BreakRecords:  breakRecords,
-			Overtime:      calculateOvertime(summary),
-			Remarks:       generateRemarks(summary),
+			StartTime1:    startTime,
+			EndTime1:      endTime,
+			TotalWorkTime: calculateWorkTime(attendance),
+			BreakStart:    breakStart,
+			BreakEnd:      breakEnd,
+			Overtime:      calculateOvertime(attendance),
+			Remarks:       generateRemarks(attendance),
 			HourlyPay:     hourlyPay,
 		})
 	}
@@ -116,17 +85,52 @@ func (s *SummaryService) GetSummary(employeeID uint, year int, month int) ([]Sum
 	return response, nil
 }
 
-func calculateOvertime(summary model.DailyWorkSummary) float64 {
+// 勤務時間を計算
+func calculateWorkTime(attendance model.Attendance) float64 {
+	// 勤務開始時間と終了時間を取得
+	startTime := attendance.StartTime1
+	var endTime *time.Time
+	if attendance.EndTime2 != nil {
+		endTime = attendance.EndTime1
+	} else {
+		endTime = attendance.EndTime2
+	}
+
+	// 勤務開始時間または終了時間がnilの場合は0時間を返却
+	if startTime == nil || endTime == nil {
+		return 0.0
+	}
+
+	// 時間を5分単位で切り下げる
+	const roundTo = 5 * time.Minute
+	startTimeRounded := startTime.Truncate(roundTo)
+	endTimeRounded := endTime.Truncate(roundTo)
+
+	// 勤務時間を計算する
+	workDuration := endTimeRounded.Sub(startTimeRounded)
+
+	// 勤務時間を時間単位で返却する
+	return workDuration.Seconds() / 3600
+}
+
+// 22時以降の勤務時間を計算
+func calculateOvertime(attendance model.Attendance) float64 {
 	var overtime float64
 
 	// 勤務開始時間と終了時間を取得
-	startTime := summary.StartTime
-	endTime := summary.EndTime
+	startTime := attendance.StartTime1
+	var endTime *time.Time
+	if attendance.EndTime2 != nil {
+		endTime = attendance.EndTime1
+	} else {
+		endTime = attendance.EndTime2
+	}
 
 	// 勤務時間がある場合、時間外労働を計算
 	if !startTime.IsZero() && endTime != nil {
+		startTimeValue := *startTime
 		// 勤務時間を計算
-		workDuration := endTime.Sub(startTime).Hours()
+		workDuration := endTime.Sub(startTimeValue).Hours()
 
 		// 22:00を超える部分を時間外労働として計算
 		if endTime.Hour() > 22 {
@@ -144,64 +148,69 @@ func calculateOvertime(summary model.DailyWorkSummary) float64 {
 	return overtime
 }
 
-func generateRemarks(summary model.DailyWorkSummary) string {
-	var remarks []string
-
-	// 勤務セグメントがある場合、備考欄を生成
-	for _, segment := range summary.WorkSegments {
-		// 時間をフォーマットし、StoreID を string 型に変換
-		startTime := segment.StartTime.Format("15:04")
-		endTime := "-"
-		if segment.EndTime != nil {
-			endTime = segment.EndTime.Format("15:04")
-		}
-		storeID := strconv.FormatUint(uint64(segment.StoreID), 10)
-
-		// フォーマットした文字列を作成
-		segmentRemark := startTime + "-" + endTime + " " + storeID
-		remarks = append(remarks, segmentRemark)
-	}
-
-	// 備考欄をカンマで連結
-	return strings.Join(remarks, ", ")
-}
-
 // サマリ１件を取得
-func (s *SummaryService) GetSummaryBySummaryID(summaryID uint) (*SummaryResponse, error) {
-	summary, err := s.repo.GetSummaryBySummaryID(summaryID)
+func (s *SummaryService) GetAttendanceByID(attendanceID uint) (*model.AttendanceResponse, error) {
+	attendance, err := s.repo.GetAttendanceByID(attendanceID)
 	if err != nil {
 		return nil, err
 	}
 
-	var breakRecords []BreakRecordResponse
-	for _, breakRecord := range summary.BreakRecords {
-		breakStart := formatTime(breakRecord.BreakStart)
-		var breakEnd string
-		if breakRecord.BreakEnd != nil {
-			breakEnd = formatTime(*breakRecord.BreakEnd)
-		}
+	remarks := generateRemarks(*attendance)
 
-		breakRecords = append(breakRecords, BreakRecordResponse{
-			ID:         breakRecord.ID,
-			BreakStart: breakStart,
-			BreakEnd:   breakEnd,
-		})
-	}
-
-	remarks := generateRemarks(*summary)
-
-	response := SummaryResponse{
-		ID:            summary.ID,
-		WorkDate:      formatDate(summary.WorkDate),
-		StartTime:     formatTime(summary.StartTime),
-		EndTime:       formatTimeIfNotNil(summary.EndTime),
-		TotalWorkTime: summary.TotalWorkTime,
-		BreakRecords:  breakRecords,
-		Overtime:      calculateOvertime(*summary),
-		Remarks:       remarks,
+	response := model.AttendanceResponse{
+		ID:         attendance.ID,
+		WorkDate:   formatDate(&attendance.WorkDate),
+		StartTime1: formatTime(attendance.StartTime1),
+		EndTime1:   formatTimeIfNotNil(attendance.EndTime1),
+		StartTime2: formatTime(attendance.StartTime2),
+		EndTime2:   formatTime(attendance.EndTime2),
+		BreakStart: formatTime(attendance.EndTime2),
+		BreakEnd:   formatTime(attendance.EndTime2),
+		StoreID1:   attendance.StoreID1,
+		StoreID2:   attendance.StoreID2,
+		Remarks:    remarks,
 	}
 
 	return &response, nil
+}
+
+// IDで指定された勤怠情報を更新する
+func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceResponse) error {
+	return s.repo.UpdateAttendance(attendanceResponse)
+}
+
+// 備考欄生成
+func generateRemarks(attendance model.Attendance) string {
+
+	// 時間をフォーマットし、StoreID を string 型に変換
+	startTime1 := attendance.StartTime1.Format("15:04")
+	endTime1 := "-"
+	if attendance.EndTime1 != nil {
+		endTime1 = attendance.EndTime1.Format("15:04")
+	}
+	storeID1 := strconv.FormatUint(uint64(attendance.StoreID1), 10)
+
+	remark1 := startTime1 + "-" + endTime1 + " " + storeID1
+	// 2店舗で勤務していた場合
+	if attendance.StartTime2 != nil {
+		startTime2 := attendance.StartTime2.Format("15:04")
+		endTime2 := "-"
+		if attendance.EndTime2 != nil {
+			endTime2 = attendance.EndTime2.Format("15:04")
+		}
+		storeID2 := strconv.FormatUint(uint64(*attendance.StoreID2), 10)
+		remark2 := startTime2 + "-" + endTime2 + " " + storeID2
+		return formatRemarks(remark1, remark2)
+	}
+
+	// 備考欄をカンマで連結
+	return remark1
+}
+
+// 時刻の文字列を time.Time 型に変換するヘルパー関数
+func parseTime(timeStr string) *time.Time {
+	t, _ := time.Parse("15:04", timeStr)
+	return &t
 }
 
 // nil チェックとデリファレンスを行う関数
@@ -209,148 +218,10 @@ func formatTimeIfNotNil(t *time.Time) string {
 	if t == nil {
 		return "" // または適切なデフォルト値
 	}
-	return formatTime(*t)
+	return formatTime(t)
 }
 
-// GetSegmentsBySummaryID returns formatted work segments for a given summary ID
-func (s *SummaryService) GetSegmentsBySummaryID(summaryID uint) ([]SegmentsResponse, error) {
-	segments, err := s.repo.FindWorkSegmentsBySummaryID(summaryID)
-	if err != nil {
-		return nil, err
-	}
-
-	var response []SegmentsResponse
-	for _, segment := range segments {
-		startTime := formatTime(segment.StartTime)
-		endTime := ""
-		if segment.EndTime != nil {
-			endTime = formatTime(*segment.EndTime)
-		}
-
-		workDate := formatDate(segment.StartTime) // Using StartTime to determine WorkDate
-
-		response = append(response, SegmentsResponse{
-			ID:        segment.ID,
-			WorkDate:  workDate,
-			StoreID:   segment.StoreID,
-			StartTime: startTime,
-			EndTime:   endTime,
-		})
-	}
-
-	return response, nil
+// カンマ区切り
+func formatRemarks(segmentRemark1, segmentRemark2 string) string {
+	return fmt.Sprintf("%s, %s", segmentRemark1, segmentRemark2)
 }
-
-// GetBreakRecordsBySummaryID returns formatted break records for a given summary ID
-func (s *SummaryService) GetBreakRecordBySummaryID(summaryID uint) (*BreakRecordResponse, error) {
-	breakRecord, err := s.repo.FindBreakRecords(summaryID)
-	if err != nil {
-		return nil, err
-	}
-
-	if breakRecord == nil {
-		return nil, nil
-	}
-
-	breakStart := formatTime(breakRecord.BreakStart)
-	breakEnd := ""
-	if breakRecord.BreakEnd != nil {
-		breakEnd = formatTime(*breakRecord.BreakEnd)
-	}
-
-	workDate := formatDate(breakRecord.BreakStart)
-
-	response := BreakRecordResponse{
-		ID:         breakRecord.ID,
-		WorkDate:   workDate,
-		BreakStart: breakStart,
-		BreakEnd:   breakEnd,
-	}
-
-	return &response, nil
-}
-
-// セグメントIDで指定された勤怠情報を更新するサービス
-// func (s *SummaryService) UpdateSummary(employeeID uint, storeID uint, segmentUpdates []SegmentUpdate, breakUpdate BreakUpdate) error {
-// 	now := time.Now().In(time.FixedZone("Asia/Tokyo", 9*60*60))
-// 	workDate := now.Format("2006-01-02")
-
-// 	// まず、セグメントの更新を行う
-// 	var earliestSegment, latestSegment *model.WorkSegment
-// 	for _, update := range segmentUpdates {
-// 		segment, err := s.repo.FindWorkSegmentByID(update.ID)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		segment.StartTime = update.StartTime
-// 		if update.EndTime != nil {
-// 			segment.EndTime = update.EndTime
-// 		}
-// 		segment.StatusID = update.StatusID
-
-// 		if err := s.repo.UpdateWorkSegment(segment); err != nil {
-// 			return err
-// 		}
-
-// 		// 最も早いセグメントと最も遅いセグメントを特定
-// 		if earliestSegment == nil || segment.StartTime.Before(earliestSegment.StartTime) {
-// 			earliestSegment = segment
-// 		}
-// 		if latestSegment == nil || (segment.EndTime != nil && segment.EndTime.After(latestSegment.EndTime)) {
-// 			latestSegment = segment
-// 		}
-// 	}
-
-// 	// 次に、休憩記録を更新する
-// 	breakRecord, err := s.repo.FindBreakRecordByID(breakUpdate.ID)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	breakRecord.BreakStart = breakUpdate.BreakStart
-// 	if breakUpdate.BreakEnd != nil {
-// 		breakRecord.BreakEnd = breakUpdate.BreakEnd
-// 	}
-
-// 	if err := s.repo.UpdateBreakRecord(breakRecord); err != nil {
-// 		return err
-// 	}
-
-// 	// セグメントと休憩記録が更新されたので、サマリーを更新する
-// 	summary, err := s.repo.FindDailyWorkSummary(employeeID, workDate)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// 総休憩時間を計算
-// 	breakRecords, err := s.repo.FindBreakRecords(summary.ID)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	var totalBreakTime time.Duration
-// 	for _, record := range breakRecords {
-// 		if record.BreakEnd != nil {
-// 			totalBreakTime += record.BreakEnd.Sub(record.BreakStart)
-// 		}
-// 	}
-
-// 	// 総勤務時間を計算
-// 	if latestSegment.EndTime == nil {
-// 		latestSegment.EndTime = &now
-// 	}
-// 	workDuration := latestSegment.EndTime.Sub(earliestSegment.StartTime)
-// 	totalWorkTime := workDuration - totalBreakTime
-
-// 	// 5分単位で切り下げる
-// 	const roundTo = 5 * time.Minute
-// 	totalWorkTimeTruncated := totalWorkTime.Truncate(roundTo)
-
-// 	summary.StartTime = earliestSegment.StartTime
-// 	summary.EndTime = latestSegment.EndTime
-// 	summary.TotalBreakTime = totalBreakTime.Seconds() / 3600        // hours
-// 	summary.TotalWorkTime = totalWorkTimeTruncated.Seconds() / 3600 // hours
-
-// 	return s.repo.UpdateSummary(summary)
-// }
