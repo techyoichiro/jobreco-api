@@ -35,7 +35,7 @@ func (r *EmployeeRepositoryImpl) CreateEmp(employee *model.Employee) error {
 
 // ステータス取得
 func (r *EmployeeRepositoryImpl) GetStatusByEmpID(employeeID uint) (int, error) {
-	var workSegment model.WorkSegment
+	var attendance model.Attendance
 
 	// 現在の日本時間を取得
 	jst, _ := time.LoadLocation("Asia/Tokyo")
@@ -44,13 +44,13 @@ func (r *EmployeeRepositoryImpl) GetStatusByEmpID(employeeID uint) (int, error) 
 	// 従業員IDに紐づいた今日のステータスを取得
 	if err := r.DB.Where("employee_id = ? AND DATE(created_at) = ?", employeeID, today).
 		Order("created_at DESC").
-		First(&workSegment).Error; err != nil {
+		First(&attendance).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return 0, nil // レコードが見つからない場合は 0 を返す
 		}
 		return 0, err
 	}
-	return workSegment.StatusID, nil
+	return attendance.StatusID, nil
 }
 
 // ログインID取得

@@ -5,15 +5,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	model "github.com/techyoichiro/jobreco-api/domain/models"
 	"github.com/techyoichiro/jobreco-api/usecase/services"
 )
-
-type WorkSegmentRequest struct {
-	ID        uint   `json:"ID"`
-	StoreID   uint   `json:"StoreID"`
-	StartTime string `json:"StartTime"`
-	EndTime   string `json:"EndTime"`
-}
 
 type SummaryController struct {
 	service *services.SummaryService
@@ -27,6 +21,11 @@ func NewSummaryController(service *services.SummaryService) *SummaryController {
 type EmployeeResponse struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`
+}
+
+type UpdateSummaryRequest struct {
+	EmployeeID uint `json:"employeeID"`
+	StoreID    uint `json:"storeID"`
 }
 
 // 全従業員のIDと名前を取得するハンドラー
@@ -51,7 +50,7 @@ func (sc *SummaryController) GetAllEmployee(c *gin.Context) {
 }
 
 // GetSummaryByEmpID 指定した従業員IDの勤怠情報を取得するハンドラー
-func (sc *SummaryController) GetSummary(c *gin.Context) {
+func (sc *SummaryController) GetAttendance(c *gin.Context) {
 	employeeIDStr := c.Param("employeeId")
 	yearStr := c.Param("year")
 	monthStr := c.Param("month")
@@ -74,7 +73,7 @@ func (sc *SummaryController) GetSummary(c *gin.Context) {
 		return
 	}
 
-	response, err := sc.service.GetSummary(uint(employeeID), year, month)
+	response, err := sc.service.GetAttendance(uint(employeeID), year, month)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -83,25 +82,21 @@ func (sc *SummaryController) GetSummary(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// 指定したsummaryIDの勤怠情報を取得するハンドラー
-func (sc *SummaryController) GetSummaryBySummaryID(c *gin.Context) {
-	summaryIDStr := c.Param("summaryID")
+// 指定したattendanceIDの勤怠情報を取得するハンドラー
+func (sc *SummaryController) GetAttendanceByID(c *gin.Context) {
+	attendanceIDStr := c.Param("attendanceID")
 
-	summaryID, err := strconv.ParseUint(summaryIDStr, 10, 32)
+	attendanceID, err := strconv.ParseUint(attendanceIDStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid summary ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid attendance ID"})
 		return
 	}
 
-	// 勤怠セグメントを取得
-	workSegments, err := sc.service.GetSegmentsBySummaryID(uint(summaryID))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	// uint64からuintに変換
+	attendanceIDUint := uint(attendanceID)
 
-	// 休憩記録を取得
-	breakRecord, err := sc.service.GetBreakRecordBySummaryID(uint(summaryID))
+	// サービスメソッド呼び出し
+	attendance, err := sc.service.GetAttendanceByID(attendanceIDUint)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -109,45 +104,25 @@ func (sc *SummaryController) GetSummaryBySummaryID(c *gin.Context) {
 
 	// レスポンスを作成
 	response := gin.H{
-		"workSegments": workSegments,
-		"breakRecord":  breakRecord,
+		"attendance": attendance,
 	}
 
 	c.JSON(http.StatusOK, response)
 }
 
 // セグメントIDで指定された勤怠情報を更新するハンドラー
-// func (sc *SummaryController) UpdateSummaryBySegmentID(c *gin.Context) {
-// 	segmentIDStr := c.Param("segmentID")
-// 	segmentID, err := strconv.ParseUint(segmentIDStr, 10, 32)
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid segment ID"})
-// 		return
-// 	}
+func (sc *SummaryController) UpdateAttendance(c *gin.Context) {
+	var request *model.AttendanceResponse
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-// 	var request struct {
-// 		WorkSegments []struct {
-// 			ID        uint   `json:"ID"`
-// 			StartTime string `json:"StartTime"`
-// 			EndTime   string `json:"EndTime,omitempty"`
-// 		} `json:"workSegments"`
-// 		BreakRecord struct {
-// 			ID         uint   `json:"ID"`
-// 			BreakStart string `json:"BreakStart"`
-// 			BreakEnd   string `json:"BreakEnd,omitempty"`
-// 		} `json:"breakRecord"`
-// 	}
+	err := sc.service.UpdateAttendance(request)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-// 	if err := c.ShouldBindJSON(&request); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	err = sc.service.UpdateSummaryBySegmentID(uint(segmentID), request.WorkSegments, request.BreakRecord)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{"message": "Summary updated successfully"})
-// }
+	c.JSON(http.StatusOK, gin.H{"message": "Work segment updated successfully"})
+}
