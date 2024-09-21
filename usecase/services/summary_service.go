@@ -3,7 +3,6 @@ package services
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	model "github.com/techyoichiro/jobreco-api/domain/models"
@@ -185,12 +184,6 @@ func (s *SummaryService) GetAttendanceByID(attendanceID uint) (*model.Attendance
 // IDで指定された勤怠情報を更新する
 func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceResponse) error {
 	// 受け取ったデータをパースして、DBに合わせた形式に変換
-	workDateStr := strings.TrimSpace(attendanceResponse.WorkDate) // 不要な空白をトリム
-	workDate, err := time.Parse("1/2(Mon)", workDateStr)
-	if err != nil {
-		return fmt.Errorf("invalid work date: %w", err)
-	}
-
 	startTime1, err := time.Parse("15:04", attendanceResponse.StartTime1)
 	if err != nil {
 		return fmt.Errorf("invalid start time 1: %w", err)
@@ -244,7 +237,6 @@ func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceRe
 	// Attendanceモデルのインスタンスを作成
 	attendance := &model.Attendance{
 		ID:         attendanceResponse.ID,
-		WorkDate:   workDate,
 		StartTime1: &startTime1,
 		EndTime1:   endTime1,
 		StartTime2: startTime2,
