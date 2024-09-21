@@ -183,24 +183,30 @@ func (s *SummaryService) GetAttendanceByID(attendanceID uint) (*model.Attendance
 
 // IDで指定された勤怠情報を更新する
 func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceResponse) error {
+	loc, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		return fmt.Errorf("failed to load location: %w", err)
+	}
+
 	// 受け取ったデータをパースして、DBに合わせた形式に変換
-	startTime1, err := time.Parse("15:04", attendanceResponse.StartTime1)
+	startTime1, err := time.ParseInLocation("15:04", attendanceResponse.StartTime1, loc)
 	if err != nil {
 		return fmt.Errorf("invalid start time 1: %w", err)
 	}
 
 	var endTime1 *time.Time
 	if attendanceResponse.EndTime1 != "" {
-		t, err := time.Parse("15:04", attendanceResponse.EndTime1)
+		t, err := time.ParseInLocation("15:04", attendanceResponse.EndTime1, loc)
 		if err != nil {
 			return fmt.Errorf("invalid end time 1: %w", err)
 		}
 		endTime1 = &t
 	}
 
+	// 他の時間も同様に処理
 	var startTime2 *time.Time
 	if attendanceResponse.StartTime2 != "" {
-		t, err := time.Parse("15:04", attendanceResponse.StartTime2)
+		t, err := time.ParseInLocation("15:04", attendanceResponse.StartTime2, loc)
 		if err != nil {
 			return fmt.Errorf("invalid start time 2: %w", err)
 		}
@@ -209,7 +215,7 @@ func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceRe
 
 	var endTime2 *time.Time
 	if attendanceResponse.EndTime2 != "" {
-		t, err := time.Parse("15:04", attendanceResponse.EndTime2)
+		t, err := time.ParseInLocation("15:04", attendanceResponse.EndTime2, loc)
 		if err != nil {
 			return fmt.Errorf("invalid end time 2: %w", err)
 		}
@@ -218,7 +224,7 @@ func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceRe
 
 	var breakStart *time.Time
 	if attendanceResponse.BreakStart != "" {
-		t, err := time.Parse("15:04", attendanceResponse.BreakStart)
+		t, err := time.ParseInLocation("15:04", attendanceResponse.BreakStart, loc)
 		if err != nil {
 			return fmt.Errorf("invalid break start: %w", err)
 		}
@@ -227,7 +233,7 @@ func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceRe
 
 	var breakEnd *time.Time
 	if attendanceResponse.BreakEnd != "" {
-		t, err := time.Parse("15:04", attendanceResponse.BreakEnd)
+		t, err := time.ParseInLocation("15:04", attendanceResponse.BreakEnd, loc)
 		if err != nil {
 			return fmt.Errorf("invalid break end: %w", err)
 		}
