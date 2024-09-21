@@ -118,9 +118,8 @@ func calculateOvertime(attendance model.Attendance) float64 {
 
 	// 勤務時間がある場合、時間外労働を計算
 	if !startTime.IsZero() && endTime != nil {
-		startTimeValue := *startTime
 		// 勤務時間を計算
-		workDuration := endTime.Sub(startTimeValue).Hours()
+		workDuration := calculateWorkTime(attendance)
 
 		// 22:00を超える部分を時間外労働として計算
 		if endTime.Hour() > 22 {
