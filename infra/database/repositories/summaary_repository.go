@@ -58,7 +58,8 @@ func (r *SummaryRepositoryImpl) UpdateAttendance(attendance *model.AttendanceRes
 		return tx.Error
 	}
 
-	if err := tx.Save(attendance).Error; err != nil {
+	// IDでレコードを検索し、更新
+	if err := tx.Model(&model.Attendance{}).Where("id = ?", attendance.ID).Updates(attendance).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
