@@ -9,5 +9,5 @@ type SummaryRepository interface {
 	GetAttendance(uint, int, int) ([]model.Attendance, error)
 	GetHourlyPay(uint) (int, error)
 	GetAttendanceByID(uint) (*model.Attendance, error)
-	UpdateAttendance(*model.AttendanceResponse) error
+	UpdateAttendance(*model.Attendance) error
 }

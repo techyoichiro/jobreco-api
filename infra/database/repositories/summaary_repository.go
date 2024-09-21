@@ -52,7 +52,7 @@ func (r *SummaryRepositoryImpl) GetAttendanceByID(attedanceID uint) (*model.Atte
 	return &attendance, nil
 }
 
-func (r *SummaryRepositoryImpl) UpdateAttendance(attendance *model.AttendanceResponse) error {
+func (r *SummaryRepositoryImpl) UpdateAttendance(attendance *model.Attendance) error {
 	tx := r.DB.Begin()
 	if tx.Error != nil {
 		return tx.Error
