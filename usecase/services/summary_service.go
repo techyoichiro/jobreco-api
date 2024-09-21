@@ -91,24 +91,39 @@ func calculateWorkTime(attendance model.Attendance) float64 {
 		return 0.0
 	}
 
-	// 時間を5分単位で切り下げる
+	// 時間を5分単位で切り下げるための定数
 	const roundTo = 5 * time.Minute
+
+	// 勤務時間を5分単位で丸める
 	startTimeRounded := startTime.Truncate(roundTo)
 	endTimeRounded := endTime.Truncate(roundTo)
 
-	// 勤務時間を計算する
+	// 勤務時間を計算
 	workDuration := endTimeRounded.Sub(startTimeRounded)
 
-	// 勤務時間を時間単位で返却する
-	return workDuration.Seconds() / 3600
+	// 休憩時間を計算
+	var breakDuration time.Duration
+	if attendance.BreakStart != nil && attendance.BreakEnd != nil {
+		breakStartRounded := attendance.BreakStart.Truncate(roundTo)
+		breakEndRounded := attendance.BreakEnd.Truncate(roundTo)
+
+		// 休憩時間を5分単位で丸めた後に計算
+		breakDuration = breakEndRounded.Sub(breakStartRounded)
+	}
+
+	// 実勤務時間（勤務時間 - 休憩時間）を計算
+	actualWorkDuration := workDuration - breakDuration
+
+	// 実勤務時間を時間単位で返却する
+	return actualWorkDuration.Seconds() / 3600
 }
 
 // 22時以降の勤務時間を計算
 func calculateOvertime(attendance model.Attendance) float64 {
-	var overtime float64
+	const overtimeThresholdHour = 22
+	const roundTo = 5 * time.Minute // 5分刻み
 
-	// 勤務開始時間と終了時間を取得
-	startTime := attendance.StartTime1
+	// 勤務終了時間を取得 (EndTime2が存在する場合はそれを使用)
 	var endTime *time.Time
 	if attendance.EndTime2 != nil {
 		endTime = attendance.EndTime2
@@ -116,22 +131,25 @@ func calculateOvertime(attendance model.Attendance) float64 {
 		endTime = attendance.EndTime1
 	}
 
-	// 勤務時間がある場合、時間外労働を計算
-	if !startTime.IsZero() && endTime != nil {
-		// 勤務時間を計算
-		workDuration := calculateWorkTime(attendance)
+	// 終了時間がnilの場合、0を返却
+	if endTime == nil {
+		return 0.0
+	}
 
-		// 22:00を超える部分を時間外労働として計算
-		if endTime.Hour() > 22 {
-			threshold := 22.0
-			// 勤務終了時間が22:00を超える場合の計算
-			overTimeStart := float64(startTime.Hour()) + float64(startTime.Minute())/60.0
-			overtime = workDuration - (threshold - overTimeStart)
+	// 勤務終了時間が22時を超えている場合の処理
+	overtime := 0.0
+	if endTime.Hour() >= overtimeThresholdHour {
+		// 22時以降の時間を計算
+		overtimeStart := time.Date(endTime.Year(), endTime.Month(), endTime.Day(), overtimeThresholdHour, 0, 0, 0, endTime.Location())
+		if endTime.After(overtimeStart) {
+			overtimeDuration := endTime.Sub(overtimeStart)
 
-			// 15分刻みに丸める（切り下げ）
-			overtime = float64(int(overtime*4)) / 4.0
+			// 5分刻みに切り下げ
+			roundedOvertime := overtimeDuration.Truncate(roundTo)
+
+			// 時間単位で返却
+			overtime = roundedOvertime.Seconds() / 3600
 		}
-
 	}
 
 	return overtime
