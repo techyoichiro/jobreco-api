@@ -8,6 +8,7 @@ import (
 
 type Attendance struct {
 	gorm.Model
+	ID         uint       `gorm:"primaryKey"`
 	EmployeeID uint       `gorm:"not null;index;uniqueIndex:unique_attendance"`     // 外部キー：employees テーブル、一意制約に含める
 	WorkDate   time.Time  `gorm:"type:date;not null;uniqueIndex:unique_attendance"` // 勤務日、一意制約に含める
 	StartTime1 *time.Time `gorm:"type:timestamp"`                                   // 勤務開始時間1

@@ -183,7 +183,77 @@ func (s *SummaryService) GetAttendanceByID(attendanceID uint) (*model.Attendance
 
 // IDで指定された勤怠情報を更新する
 func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceResponse) error {
-	return s.repo.UpdateAttendance(attendanceResponse)
+	// 受け取ったデータをパースして、DBに合わせた形式に変換
+	workDate, err := time.Parse("2006-01-02", attendanceResponse.WorkDate)
+	if err != nil {
+		return fmt.Errorf("invalid work date: %w", err)
+	}
+
+	startTime1, err := time.Parse("15:04", attendanceResponse.StartTime1)
+	if err != nil {
+		return fmt.Errorf("invalid start time 1: %w", err)
+	}
+
+	var endTime1 *time.Time
+	if attendanceResponse.EndTime1 != "" {
+		t, err := time.Parse("15:04", attendanceResponse.EndTime1)
+		if err != nil {
+			return fmt.Errorf("invalid end time 1: %w", err)
+		}
+		endTime1 = &t
+	}
+
+	var startTime2 *time.Time
+	if attendanceResponse.StartTime2 != "" {
+		t, err := time.Parse("15:04", attendanceResponse.StartTime2)
+		if err != nil {
+			return fmt.Errorf("invalid start time 2: %w", err)
+		}
+		startTime2 = &t
+	}
+
+	var endTime2 *time.Time
+	if attendanceResponse.EndTime2 != "" {
+		t, err := time.Parse("15:04", attendanceResponse.EndTime2)
+		if err != nil {
+			return fmt.Errorf("invalid end time 2: %w", err)
+		}
+		endTime2 = &t
+	}
+
+	var breakStart *time.Time
+	if attendanceResponse.BreakStart != "" {
+		t, err := time.Parse("15:04", attendanceResponse.BreakStart)
+		if err != nil {
+			return fmt.Errorf("invalid break start: %w", err)
+		}
+		breakStart = &t
+	}
+
+	var breakEnd *time.Time
+	if attendanceResponse.BreakEnd != "" {
+		t, err := time.Parse("15:04", attendanceResponse.BreakEnd)
+		if err != nil {
+			return fmt.Errorf("invalid break end: %w", err)
+		}
+		breakEnd = &t
+	}
+
+	// Attendanceモデルのインスタンスを作成
+	attendance := &model.Attendance{
+		ID:         attendanceResponse.ID,
+		WorkDate:   workDate,
+		StartTime1: &startTime1,
+		EndTime1:   endTime1,
+		StartTime2: startTime2,
+		EndTime2:   endTime2,
+		BreakStart: breakStart,
+		BreakEnd:   breakEnd,
+		StoreID1:   attendanceResponse.StoreID1,
+		StoreID2:   attendanceResponse.StoreID2,
+	}
+
+	return s.repo.UpdateAttendance(attendance)
 }
 
 // 備考欄生成
