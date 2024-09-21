@@ -81,9 +81,9 @@ func calculateWorkTime(attendance model.Attendance) float64 {
 	startTime := attendance.StartTime1
 	var endTime *time.Time
 	if attendance.EndTime2 != nil {
-		endTime = attendance.EndTime1
-	} else {
 		endTime = attendance.EndTime2
+	} else {
+		endTime = attendance.EndTime1
 	}
 
 	// 勤務開始時間または終了時間がnilの場合は0時間を返却
@@ -111,9 +111,9 @@ func calculateOvertime(attendance model.Attendance) float64 {
 	startTime := attendance.StartTime1
 	var endTime *time.Time
 	if attendance.EndTime2 != nil {
-		endTime = attendance.EndTime1
-	} else {
 		endTime = attendance.EndTime2
+	} else {
+		endTime = attendance.EndTime1
 	}
 
 	// 勤務時間がある場合、時間外労働を計算
