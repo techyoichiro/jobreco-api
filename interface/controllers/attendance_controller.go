@@ -94,5 +94,5 @@ func (ac *AttendanceController) PostReturn(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"statusID": 1})
+	c.JSON(http.StatusOK, gin.H{"statusID": 4})
 }
