@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"time"
+
 	model "github.com/techyoichiro/jobreco-api/domain/models"
 )
 
@@ -10,4 +12,5 @@ type SummaryRepository interface {
 	GetHourlyPay(uint) (int, error)
 	GetAttendanceByID(uint) (*model.Attendance, error)
 	UpdateAttendance(*model.Attendance) error
+	GetWorkDateByID(uint) (time.Time, error)
 }

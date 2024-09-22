@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"time"
+
 	model "github.com/techyoichiro/jobreco-api/domain/models"
 	"gorm.io/gorm"
 )
@@ -65,4 +67,15 @@ func (r *SummaryRepositoryImpl) UpdateAttendance(attendance *model.Attendance) e
 	}
 
 	return tx.Commit().Error
+}
+
+func (r *SummaryRepositoryImpl) GetWorkDateByID(id uint) (time.Time, error) {
+	var attendance model.Attendance
+	err := r.DB.Where("id = ?", id).First(&attendance).Error
+	if err != nil {
+		return time.Time{}, err // errorの場合はゼロ値のtime.Timeを返す
+	}
+
+	// attendanceから日付を取得して返す
+	return attendance.WorkDate, nil
 }

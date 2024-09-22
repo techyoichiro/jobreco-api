@@ -31,7 +31,7 @@ type AttendanceResponse struct {
 	EndTime2      string  `json:"EndTime2"`
 	BreakStart    string  `json:"BreakStart"`
 	BreakEnd      string  `json:"BreakEnd"`
-	TotalWorkTime float64 `json:"TotalWorkTime"`
+	TotalWorkTime string  `json:"TotalWorkTime"`
 	Overtime      float64 `json:"Overtime"`
 	StoreID1      uint    `json:"StoreID1"`
 	StoreID2      *uint   `json:"StoreID2"`
