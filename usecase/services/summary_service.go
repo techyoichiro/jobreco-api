@@ -76,7 +76,7 @@ func (s *SummaryService) GetAttendance(employeeID uint, year int, month int) ([]
 }
 
 // 勤務時間を計算
-func calculateWorkTime(attendance model.Attendance) float64 {
+func calculateWorkTime(attendance model.Attendance) string {
 	// 勤務開始時間と終了時間を取得
 	startTime := attendance.StartTime1
 	var endTime *time.Time
@@ -88,7 +88,7 @@ func calculateWorkTime(attendance model.Attendance) float64 {
 
 	// 勤務開始時間または終了時間がnilの場合は0時間を返却
 	if startTime == nil || endTime == nil {
-		return 0.0
+		return "0.0"
 	}
 
 	// 時間を5分単位で切り下げるための定数
@@ -115,7 +115,9 @@ func calculateWorkTime(attendance model.Attendance) float64 {
 	actualWorkDuration := workDuration - breakDuration
 
 	// 実勤務時間を時間単位で返却する
-	return actualWorkDuration.Seconds() / 3600
+	hours := actualWorkDuration.Seconds() / 3600
+	formattedHours := fmt.Sprintf("%.2f", hours)
+	return formattedHours
 }
 
 // 22時以降の勤務時間を計算
@@ -188,15 +190,26 @@ func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceRe
 		return fmt.Errorf("failed to load location: %w", err)
 	}
 
+	// 受け取ったデータのwork_dateを取得
+	workDate, err := s.repo.GetWorkDateByID(attendanceResponse.ID)
+	if err != nil {
+		return fmt.Errorf("failed to load workDate: %w", err)
+	}
+
+	// workDate を time.Time 型から受け取っている前提で、文字列に変換
+	workDateStr := workDate.Format("2006-01-02")
+
 	// 受け取ったデータをパースして、DBに合わせた形式に変換
-	startTime1, err := time.ParseInLocation("15:04", attendanceResponse.StartTime1, loc)
+	startTime1Str := workDateStr + " " + attendanceResponse.StartTime1
+	startTime1, err := time.ParseInLocation("2006-01-02 15:04", startTime1Str, loc)
 	if err != nil {
 		return fmt.Errorf("invalid start time 1: %w", err)
 	}
 
 	var endTime1 *time.Time
 	if attendanceResponse.EndTime1 != "" {
-		t, err := time.ParseInLocation("15:04", attendanceResponse.EndTime1, loc)
+		endTime1Str := workDateStr + " " + attendanceResponse.EndTime1
+		t, err := time.ParseInLocation("2006-01-02 15:04", endTime1Str, loc)
 		if err != nil {
 			return fmt.Errorf("invalid end time 1: %w", err)
 		}
@@ -206,7 +219,8 @@ func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceRe
 	// 他の時間も同様に処理
 	var startTime2 *time.Time
 	if attendanceResponse.StartTime2 != "" {
-		t, err := time.ParseInLocation("15:04", attendanceResponse.StartTime2, loc)
+		startTime2Str := workDateStr + " " + attendanceResponse.StartTime2
+		t, err := time.ParseInLocation("2006-01-02 15:04", startTime2Str, loc)
 		if err != nil {
 			return fmt.Errorf("invalid start time 2: %w", err)
 		}
@@ -215,7 +229,8 @@ func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceRe
 
 	var endTime2 *time.Time
 	if attendanceResponse.EndTime2 != "" {
-		t, err := time.ParseInLocation("15:04", attendanceResponse.EndTime2, loc)
+		endTime2Str := workDateStr + " " + attendanceResponse.EndTime2
+		t, err := time.ParseInLocation("2006-01-02 15:04", endTime2Str, loc)
 		if err != nil {
 			return fmt.Errorf("invalid end time 2: %w", err)
 		}
@@ -224,7 +239,8 @@ func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceRe
 
 	var breakStart *time.Time
 	if attendanceResponse.BreakStart != "" {
-		t, err := time.ParseInLocation("15:04", attendanceResponse.BreakStart, loc)
+		breakStartStr := workDateStr + " " + attendanceResponse.BreakStart
+		t, err := time.ParseInLocation("2006-01-02 15:04", breakStartStr, loc)
 		if err != nil {
 			return fmt.Errorf("invalid break start: %w", err)
 		}
@@ -233,7 +249,8 @@ func (s *SummaryService) UpdateAttendance(attendanceResponse *model.AttendanceRe
 
 	var breakEnd *time.Time
 	if attendanceResponse.BreakEnd != "" {
-		t, err := time.ParseInLocation("15:04", attendanceResponse.BreakEnd, loc)
+		breakEndStr := workDateStr + " " + attendanceResponse.BreakEnd
+		t, err := time.ParseInLocation("2006-01-02 15:04", breakEndStr, loc)
 		if err != nil {
 			return fmt.Errorf("invalid break end: %w", err)
 		}
