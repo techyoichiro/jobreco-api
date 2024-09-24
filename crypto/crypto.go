@@ -11,7 +11,7 @@ import (
 )
 
 // 鍵を管理
-var encryptionKey = []byte("your-32-byte-long-encryption-key!") // AES-256のため32バイト
+var encryptionKey = []byte("thisis32byteslongkeyforaes256!") // AES-256のため32バイト
 
 // 暗号化
 func PasswordEncrypt(password string) (string, error) {
