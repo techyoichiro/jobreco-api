@@ -5,13 +5,12 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"io"
+	"os"
 
 	"golang.org/x/crypto/bcrypt"
 )
-
-// 鍵を管理
-var encryptionKey = []byte("thisis32byteslongkeyforaes256!") // AES-256のため32バイト
 
 // 暗号化
 func PasswordEncrypt(password string) (string, error) {
@@ -26,7 +25,12 @@ func CompareHashAndPassword(hash, password string) error {
 
 // メールアドレスを暗号化する関数
 func EncryptEmail(email string) (string, error) {
-	block, err := aes.NewCipher(encryptionKey)
+	encryptionKey := os.Getenv("ENCRYPTION_KEY")
+	if encryptionKey == "" {
+		return "", fmt.Errorf("ENCRYPTION_KEY environment variable is not set")
+	}
+
+	block, err := aes.NewCipher([]byte(encryptionKey))
 	if err != nil {
 		return "", err
 	}
@@ -47,12 +51,17 @@ func EncryptEmail(email string) (string, error) {
 
 // メールアドレスを復号化する関数
 func DecryptEmail(encryptedEmail string) (string, error) {
+	encryptionKey := os.Getenv("ENCRYPTION_KEY")
+	if encryptionKey == "" {
+		return "", fmt.Errorf("ENCRYPTION_KEY environment variable is not set")
+	}
+
 	ciphertext, err := base64.StdEncoding.DecodeString(encryptedEmail)
 	if err != nil {
 		return "", err
 	}
 
-	block, err := aes.NewCipher(encryptionKey)
+	block, err := aes.NewCipher([]byte(encryptionKey))
 	if err != nil {
 		return "", err
 	}
