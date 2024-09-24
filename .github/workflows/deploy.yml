@@ -9,6 +9,7 @@ env:
   GCP_PROJECT_ID: peppy-vertex-434912-m1
   GCP_REGION: asia-northeast1
   IMAGE_NAME: gcr.io/peppy-vertex-434912-m1/backend-backend-1
+  ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
 
 jobs:
   deploy:
@@ -55,4 +56,5 @@ jobs:
             --region ${GCP_REGION} \
             --allow-unauthenticated \
             --set-env-vars DATABASE_URL='${{ secrets.DATABASE_URL }}' \
+            --set-env-vars ENCRYPTION_KEY='${{ secrets.ENCRYPTION_KEY }}' \
             --set-env-vars TZ='Asia/Tokyo' \
