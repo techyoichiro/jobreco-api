@@ -19,6 +19,7 @@ func NewAuthService(repo repositories.EmployeeRepository) *AuthService {
 
 // サインアップ
 func (s *AuthService) Signup(name, loginID, password string) (*model.Employee, error) {
+	// メールアドレスの存在チェック
 	existingEmployee, err := s.repo.FindEmpByLoginID(loginID)
 	if err != nil {
 		log.Printf("Error finding employee by loginID: %v", err)
@@ -29,18 +30,26 @@ func (s *AuthService) Signup(name, loginID, password string) (*model.Employee, e
 		return nil, errors.New("同一の従業員IDが既に登録されています")
 	}
 
+	// パスワードの暗号化
 	encryptedPw, err := crypto.PasswordEncrypt(password)
 	if err != nil {
 		log.Printf("Error encrypting password: %v", err)
 		return nil, err
 	}
 
+	// メールアドレスの暗号化
+	encryptedEmail, err := crypto.EncryptEmail(loginID)
+	if err != nil {
+		log.Printf("Error encrypting email: %v", err)
+		return nil, err
+	}
+
 	employee := &model.Employee{
 		Name:      name,
-		LoginID:   loginID,
+		LoginID:   encryptedEmail,
 		Password:  encryptedPw,
-		RoleID:    1,
-		HourlyPay: 1112,
+		RoleID:    1,    // 初期値には従業員権限を付与
+		HourlyPay: 1112, // 初期値には時給1112円を付与
 	}
 
 	err = s.repo.CreateEmp(employee)
