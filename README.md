@@ -45,11 +45,16 @@ mainブランチにマージされることでGitHub ActionsでDocekrイメー�
 
 ## 技術選定理由
 APIについてはGo+ginで構築した。
-個人開発ということで一度触れたことのあるGoとginでAPIを構成した。
+
 サーバーはCloud Run、DBはSupabaseを使用している。
 
 ### バックエンド
 フレームワークはGoとEchoで迷ったが、フレームワークの中で一番スター(※世の中で使われる/使う機会)の多いGinを選択した。
+
+詳細は下記をご覧ください
+
+<img src="https://github.com/user-attachments/assets/130559ff-1231-4297-8af3-65e8eedbe6de">[勤怠管理アプリを作る 技術選定編](https://qiita.com/TechYoichiro/items/00fdf080a0832baf5dea?utm_campaign=post_article&utm_medium=twitter&utm_source=twitter_share)
+
 
 ### 気づいたこと/工夫したこと
 一つの建物に店舗が2つあり、1日にその両方で勤務する従業員がいる。
