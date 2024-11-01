@@ -9,6 +9,8 @@ require (
 	gorm.io/gorm v1.25.11
 )
 
+require github.com/mattn/go-sqlite3 v1.14.22 // indirect
+
 require (
 	github.com/bytedance/sonic v1.12.1 // indirect
 	github.com/bytedance/sonic/loader v0.2.0 // indirect
@@ -44,4 +46,5 @@ require (
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.9
+	gorm.io/driver/sqlite v1.5.6
 )

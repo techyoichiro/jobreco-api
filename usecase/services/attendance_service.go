@@ -56,7 +56,7 @@ func (s *AttendanceService) ClockOut(employeeID uint, storeID uint) error {
 		return err
 	}
 
-	// リクエストの storeID と最新セグメントの StoreID が異なり、かつ StatusID が 3 以外の場合にエラーを返す
+	// リクエストのstoreIDと最新の勤怠記録のStoreIDが異なり、かつStatusIDが3以外の場合にエラーを返す
 	if attendance.StartTime2 == nil {
 		if attendance.StoreID1 != storeID && attendance.StatusID != 3 {
 			return fmt.Errorf("打刻する店舗が違います。")
