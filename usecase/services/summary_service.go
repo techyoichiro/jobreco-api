@@ -303,8 +303,10 @@ func generateRemarks(attendance model.Attendance) string {
 
 // 日付フォーマット
 func formatDate(date *time.Time) string {
-	// "2006-01-02"は、フォーマットの基準となる日時
-	return date.Format("1/2(日)") // 月/日(曜日) の形式でフォーマット
+	// 曜日を日本語にマッピング
+	daysOfWeek := []string{"日", "月", "火", "水", "木", "金", "土"}
+	weekday := daysOfWeek[date.Weekday()]
+	return date.Format("1/2") + "(" + weekday + ")" // 月/日(曜日) の形式でフォーマット
 }
 
 // 時刻フォーマット
