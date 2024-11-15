@@ -66,3 +66,8 @@ func (r *EmployeeRepositoryImpl) GetLoginIDByEmpID(employeeID string) (string, e
 	}
 	return employee.LoginID, nil
 }
+
+// パスワード更新
+func (r *EmployeeRepositoryImpl) UpdateEmpPassword(employee *model.Employee) error {
+	return r.DB.Model(employee).Update("password", employee.Password).Error
+}

@@ -96,3 +96,39 @@ func (s *AuthService) GetLoginIDByEmpID(employeeID string) (string, error) {
 	}
 	return loginID, nil
 }
+
+// パスワード更新
+func (s *AuthService) UpdatePassword(loginID, currentPassword, newPassword string) error {
+	// 現在のパスワードが正しいか確認
+	employee, err := s.repo.FindEmpByLoginID(loginID)
+	if err != nil {
+		log.Printf("Error finding employee by ID: %v", err)
+		return err
+	}
+	if employee == nil {
+		return errors.New("従業員が見つかりません")
+	}
+
+	// 現在のパスワードの検証
+	err = crypto.CompareHashAndPassword(employee.Password, currentPassword)
+	if err != nil {
+		return errors.New("現在のパスワードが一致しません")
+	}
+
+	// 新しいパスワードの暗号化
+	encryptedPw, err := crypto.PasswordEncrypt(newPassword)
+	if err != nil {
+		log.Printf("Error encrypting new password: %v", err)
+		return err
+	}
+
+	// データベースのパスワードを更新
+	employee.Password = encryptedPw
+	err = s.repo.UpdateEmpPassword(employee)
+	if err != nil {
+		log.Printf("Error updating employee password: %v", err)
+		return err
+	}
+
+	return nil
+}
