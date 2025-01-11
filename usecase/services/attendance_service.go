@@ -53,7 +53,16 @@ func (s *AttendanceService) ClockOut(employeeID uint, storeID uint) error {
 
 	attendance, err := s.repo.FindAttendance(employeeID, workDate)
 	if err != nil {
-		return err
+		// 見つからなかった場合は、前日の日付を求めて再検索
+		// (あるいは「最終の未完了レコード」を探す方式に切り替える、など)
+		yesterday := now.AddDate(0, 0, -1).Format("2006-01-02")
+		attendance, err = s.repo.FindAttendance(employeeID, yesterday)
+		if err != nil {
+			return err
+		}
+		if attendance == nil {
+			return fmt.Errorf("退勤対象の勤怠が見つかりません")
+		}
 	}
 
 	// リクエストのstoreIDと最新の勤怠記録のStoreIDが異なり、かつStatusIDが3以外の場合にエラーを返す

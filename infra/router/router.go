@@ -13,7 +13,7 @@ func SetupRouter(authController *controller.AuthController, attendanceController
 	// CORS設定を手動で追加
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
-			"http://localhost:3000",
+			"http://localhost:3001",
 			"https://jobreco-api-njgi6c7muq-an.a.run.app",
 			"https://jobreco-aj3kdocv3-yoichiros-projects.vercel.app",
 			"https://jobreco-rico.vercel.app",
@@ -32,6 +32,8 @@ func SetupRouter(authController *controller.AuthController, attendanceController
 	{
 		authRouter.POST("/signup", authController.PostSignup)
 		authRouter.POST("/login", authController.PostLogin)
+		authRouter.POST("/change-password", authController.PostLogin)
+
 	}
 
 	attendanceRouter := router.Group("/attendance")
