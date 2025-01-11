@@ -79,3 +79,33 @@ func (ac *AuthController) PostLogin(c *gin.Context) {
 		"status_id": statusID,
 	})
 }
+
+// パスワード変更 ----
+func (ac *AuthController) PostChangePassword(c *gin.Context) {
+	var req struct {
+		ID              string `json:"id"`
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+	}
+
+	// JSONをパース
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	// 従業員IDから暗号化されたlogin_idを取得
+	loginID, err := ac.service.GetLoginIDByEmpID(req.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve login_id"})
+		return
+	}
+
+	// パスワード更新サービスを呼び出す
+	if err := ac.service.UpdatePassword(loginID, req.CurrentPassword, req.NewPassword); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "パスワードが正常に変更されました"})
+}

@@ -32,7 +32,7 @@ func SetupRouter(authController *controller.AuthController, attendanceController
 	{
 		authRouter.POST("/signup", authController.PostSignup)
 		authRouter.POST("/login", authController.PostLogin)
-		authRouter.POST("/change-password", authController.PostLogin)
+		authRouter.POST("/change-password", authController.PostChangePassword)
 
 	}
 
