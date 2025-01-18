@@ -49,7 +49,7 @@ func (s *AuthService) Signup(name, loginID, password string) (*model.Employee, e
 		LoginID:   encryptedEmail,
 		Password:  encryptedPw,
 		RoleID:    1,    // 初期値には従業員権限を付与
-		HourlyPay: 1112, // 初期値には時給1112円を付与
+		HourlyPay: 1162, // 初期値には時給1162円を付与
 	}
 
 	err = s.repo.CreateEmp(employee)
@@ -131,4 +131,13 @@ func (s *AuthService) UpdatePassword(loginID, currentPassword, newPassword strin
 	}
 
 	return nil
+}
+
+func (s *AuthService) DecryptLoginID(encryptedLoginID string) (string, error) {
+	loginID, err := crypto.DecryptEmail(encryptedLoginID)
+	if err != nil {
+		log.Printf("Error decrypting login_id: %v", err)
+		return "", err
+	}
+	return loginID, nil
 }
