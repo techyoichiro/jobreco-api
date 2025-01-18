@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/techyoichiro/jobreco-api/usecase/services"
@@ -83,7 +84,7 @@ func (ac *AuthController) PostLogin(c *gin.Context) {
 // パスワード変更
 func (ac *AuthController) PostChangePassword(c *gin.Context) {
 	var req struct {
-		ID              string `json:"id"`
+		ID              int    `json:"id"`
 		CurrentPassword string `json:"current_password"`
 		NewPassword     string `json:"new_password"`
 	}
@@ -95,7 +96,7 @@ func (ac *AuthController) PostChangePassword(c *gin.Context) {
 	}
 
 	// 従業員IDから暗号化されたlogin_idを取得
-	loginID, err := ac.service.GetLoginIDByEmpID(req.ID)
+	loginID, err := ac.service.GetLoginIDByEmpID(strconv.Itoa(req.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve login_id"})
 		return
