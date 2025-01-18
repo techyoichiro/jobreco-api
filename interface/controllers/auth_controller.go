@@ -96,9 +96,15 @@ func (ac *AuthController) PostChangePassword(c *gin.Context) {
 	}
 
 	// 従業員IDから暗号化されたlogin_idを取得
-	loginID, err := ac.service.GetLoginIDByEmpID(strconv.Itoa(req.ID))
+	hashedLoginID, err := ac.service.GetLoginIDByEmpID(strconv.Itoa(req.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve login_id"})
+		return
+	}
+
+	loginID, err := ac.service.DecryptLoginID(hashedLoginID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to Decrypt login_id"})
 		return
 	}
 
