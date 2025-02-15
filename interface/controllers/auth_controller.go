@@ -83,7 +83,7 @@ func (ac *AuthController) PostLogin(c *gin.Context) {
 // パスワード変更
 func (ac *AuthController) PostChangePassword(c *gin.Context) {
 	var req struct {
-		ID              string `json:"id"`
+		ID              string `json:"employee_id"`
 		CurrentPassword string `json:"current_password"`
 		NewPassword     string `json:"new_password"`
 	}
