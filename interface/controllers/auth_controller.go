@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -83,7 +84,7 @@ func (ac *AuthController) PostLogin(c *gin.Context) {
 // パスワード変更
 func (ac *AuthController) PostChangePassword(c *gin.Context) {
 	var req struct {
-		ID              string `json:"id"`
+		ID              string `json:"employee_id"`
 		CurrentPassword string `json:"current_password"`
 		NewPassword     string `json:"new_password"`
 	}
@@ -95,6 +96,7 @@ func (ac *AuthController) PostChangePassword(c *gin.Context) {
 	}
 
 	// 従業員IDから暗号化されたlogin_idを取得
+	log.Println(req.ID)
 	loginID, err := ac.service.GetLoginIDByEmpID(req.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve login_id"})
