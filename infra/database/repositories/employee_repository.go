@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"log"
 	"time"
 
 	model "github.com/techyoichiro/jobreco-api/domain/models"
@@ -26,7 +25,6 @@ func (r *EmployeeRepositoryImpl) FindEmpByLoginID(loginID string) (*model.Employ
 		}
 		return nil, err
 	}
-	log.Print(employee)
 	return &employee, nil
 }
 
