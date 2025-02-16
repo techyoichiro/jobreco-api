@@ -133,6 +133,7 @@ func (s *AuthService) UpdatePassword(loginID, currentPassword, newPassword strin
 	return nil
 }
 
+// 暗号化された login_id を復号
 func (s *AuthService) DecryptLoginID(encryptedLoginID string) (string, error) {
 	loginID, err := crypto.DecryptEmail(encryptedLoginID)
 	if err != nil {
@@ -140,4 +141,27 @@ func (s *AuthService) DecryptLoginID(encryptedLoginID string) (string, error) {
 		return "", err
 	}
 	return loginID, nil
+}
+
+// アカウント設定更新
+func (s *AuthService) UpdateAccount(employeeID int, name string, hourlyPay int, competentStoreID int) error {
+	// ユーザー情報を取得
+	employee, err := s.repo.FindEmpByEmpID(employeeID)
+	if err != nil {
+		log.Printf("Error finding employee by ID: %v", err)
+		return err
+	}
+
+	// 取得した employee の情報を更新
+	employee.Name = name
+	employee.HourlyPay = hourlyPay
+	employee.CompetentStoreID = competentStoreID
+
+	// 更新された employee をデータベースに保存
+	if err := s.repo.UpdateEmployee(employee); err != nil {
+		log.Printf("Error updating employee: %v", err)
+		return err
+	}
+
+	return nil
 }

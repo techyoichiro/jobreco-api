@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/techyoichiro/jobreco-api/usecase/services"
@@ -72,9 +73,11 @@ func (ac *AuthController) PostLogin(c *gin.Context) {
 	// ユーザー情報と status_id を返す
 	c.JSON(http.StatusOK, gin.H{
 		"employee": gin.H{
-			"ID":     emp.ID,
-			"Name":   emp.Name,
-			"RoleID": emp.RoleID,
+			"ID":          emp.ID,
+			"Name":        emp.Name,
+			"RoleID":      emp.RoleID,
+			"HourlyPay":   emp.HourlyPay,
+			"CompetentID": emp.CompetentStoreID,
 		},
 		"status_id": statusID,
 	})
@@ -108,4 +111,47 @@ func (ac *AuthController) PostChangePassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "パスワードが正常に変更されました"})
+}
+
+// アカウント設定更新
+func (ac *AuthController) PostUpdateAccount(c *gin.Context) {
+	var req struct {
+		ID               string `json:"employee_id"`
+		Name             string `json:"user_name"`
+		HourlyPay        string `json:"hourly_pay"`
+		CompetentStoreID string `json:"competent_id"`
+	}
+
+	// JSONをパース
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	// 各フィールドを数値に変換する
+	id, err := strconv.Atoi(req.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "employee_id must be a valid number"})
+		return
+	}
+
+	hourlyPay, err := strconv.Atoi(req.HourlyPay)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "hourly_pay must be a valid number"})
+		return
+	}
+
+	competentStoreID, err := strconv.Atoi(req.CompetentStoreID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "店舗を選択してください"})
+		return
+	}
+
+	// 数値に変換した値をサービス層に渡して更新処理を実行
+	if err := ac.service.UpdateAccount(id, req.Name, hourlyPay, competentStoreID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "アカウント情報が正常に更新されました"})
 }
