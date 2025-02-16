@@ -17,7 +17,7 @@ func NewSummaryRepository(db *gorm.DB) *SummaryRepositoryImpl {
 
 func (r *SummaryRepositoryImpl) GetAllEmployee() ([]model.Employee, error) {
 	var employees []model.Employee
-	if err := r.DB.Select("id, name").Find(&employees).Error; err != nil {
+	if err := r.DB.Select("id, name, hourly_pay, competent_store_id").Find(&employees).Error; err != nil {
 		return nil, err
 	}
 	return employees, nil
