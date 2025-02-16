@@ -71,3 +71,20 @@ func (r *EmployeeRepositoryImpl) GetLoginIDByEmpID(employeeID string) (string, e
 func (r *EmployeeRepositoryImpl) UpdateEmpPassword(employee *model.Employee) error {
 	return r.DB.Model(employee).Update("password", employee.Password).Error
 }
+
+// 従業員取得
+func (r *EmployeeRepositoryImpl) FindEmpByEmpID(employeeID int) (*model.Employee, error) {
+	var employee model.Employee
+	if err := r.DB.Where("id = ?", employeeID).First(&employee).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &employee, nil
+}
+
+// 従業員更新
+func (r *EmployeeRepositoryImpl) UpdateEmployee(employee *model.Employee) error {
+	return r.DB.Model(employee).Updates(employee).Error
+}
