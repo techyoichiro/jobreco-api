@@ -19,8 +19,10 @@ func NewSummaryController(service *services.SummaryService) *SummaryController {
 
 // 返却用
 type EmployeeResponse struct {
-	ID   uint   `json:"id"`
-	Name string `json:"name"`
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	HourlyPay   int    `json:"hourlyPay"`
+	CompetentID int    `json:"competent_store_id"`
 }
 
 type UpdateSummaryRequest struct {
@@ -40,8 +42,10 @@ func (sc *SummaryController) GetAllEmployee(c *gin.Context) {
 	var employeeResponses []EmployeeResponse
 	for _, employee := range employees {
 		employeeResponses = append(employeeResponses, EmployeeResponse{
-			ID:   employee.ID,
-			Name: employee.Name,
+			ID:          employee.ID,
+			Name:        employee.Name,
+			HourlyPay:   employee.HourlyPay,
+			CompetentID: employee.CompetentStoreID,
 		})
 	}
 
